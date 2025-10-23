@@ -1,0 +1,28 @@
+{{! views/photo-details.handlebars }}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Photo: {{photo.title}}</title>
+    <style>
+        /* Simple styling to enforce max width requirement */
+        .photo {
+            max-width: 300px; 
+            height: auto;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1>Photo Details</h1>
+
+    <p><a href="/edit-photo?pid={{photo.id}}">Edit Photo Details</a></p>
+    <p>Title: {{photo.title}}</p>
+    <p>Description: {{photo.description}}</p>
+    
+    <img class="photo" src="/photos/{{photo.filename}}" alt="{{photo.title}}">
+
+    <p><a href="javascript:history.back()">Back to Photos</a></p>
+
+</body>
+</html>

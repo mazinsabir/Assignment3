@@ -27,12 +27,17 @@ function configureServer() {
     app.use(express.static('public')) 
     // IMPORTANT: You will need a 'photos' folder and potentially a 'public' folder for CSS
 
+    app.use('/photos', express.static('photos'))
+
     // --- LANDING PAGE: 127.0.0.1:8000 ---
     // Lists all albums as bullet points and links.
     app.get('/', handleLandingPage)
 
     // --- ALBUM DETAILS PAGE ---
     app.get('/album/:albumId', handleAlbumDetailsPage)
+
+    // --- PHOTO DETAILS PAGE ---
+    app.get('/photo-details/:photoId', handlePhotoDetailsPage)
 
     // Start listening on the required port
     app.listen(8000, () => {
@@ -103,6 +108,41 @@ async function handleAlbumDetailsPage(req, res) {
     }
 
     
+}
+
+/**
+ * Handles the Photo Details route to display a specific photo.
+ * Route: /photo-details/:photoId
+ * @param {Object} request - The Express request object
+ * @param {Object} response - The Express response object
+ * @returns {Promise<void>}
+ */
+async function handlePhotoDetailsPage(request, response) {
+    const photoId = parseInt(request.params.photoId)
+
+    if (isNaN(photoId)) {
+        response.status(404).send("Error: Invalid Photo ID.")
+        return
+    }
+
+    try {
+        // We use the existing business function
+        const photo = await business.findPhotoByIdBusiness(photoId) 
+
+        if (!photo) {
+            response.status(404).send("Photo not found.")
+            return
+        }
+
+        response.render('photo-details', { 
+            photo: photo,
+            layout: undefined
+        })
+
+    } catch (error) {
+        console.error("Error retrieving photo details:", error)
+        response.status(500).send("An error occurred while loading the photo details.")
+    }
 }
 
 /**
