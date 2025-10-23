@@ -1,9 +1,9 @@
 const express = require('express')
 const { engine } = require('express-handlebars')
-const business = require('./business') // Requires the new function findAlbumsBusiness
+const business = require('./business') 
 
 const app = express()
-const port = 8000 // Required port
+const port = 8000 
 
 /**
  * Configure Handlebars template engine.
@@ -23,28 +23,24 @@ function configureHandlebars() {
  * @returns {void}
  */
 function configureServer() {
-    // Middleware to serve static files (e.g., images, CSS)
     app.use(express.static('public')) 
-    // IMPORTANT: You will need a 'photos' folder and potentially a 'public' folder for CSS
 
     app.use('/photos', express.static('photos'))
 
     app.use(express.urlencoded({ extended: true }))
 
-    // --- LANDING PAGE: 127.0.0.1:8000 ---
-    // Lists all albums as bullet points and links.
+    //LANDING PAGE
     app.get('/', handleLandingPage)
 
-    // --- ALBUM DETAILS PAGE ---
+    //ALBUM DETAILS PAGE
     app.get('/album/:albumId', handleAlbumDetailsPage)
 
-    // --- PHOTO DETAILS PAGE ---
+    //PHOTO DETAILS PAGE
     app.get('/photo-details/:photoId', handlePhotoDetailsPage)
 
     app.get('/edit-photo', handleEditPhotoGet)      // Handles form display
     app.post('/edit-photo', handleEditPhotoPost)   // Handles form submission
 
-    // Start listening on the required port
     app.listen(8000, () => {
         console.log(`Server running at http://127.0.0.1:8000`)
     })
@@ -63,7 +59,7 @@ async function handleLandingPage(req, res) {
         res.render('index', { 
             title: 'Digital Media Catalog',
             albums: albums,
-            layout: undefined // Assignment requirement: layout not required
+            layout: undefined
         })
     } catch (error) {
         console.error("Error retrieving albums:", error)
@@ -79,7 +75,6 @@ async function handleLandingPage(req, res) {
  * @returns {Promise<void>}
  */
 async function handleAlbumDetailsPage(req, res) {
-    // 1. Validate Input
     const albumId = parseInt(req.params.albumId)
     
     if (isNaN(albumId)) {
@@ -88,21 +83,17 @@ async function handleAlbumDetailsPage(req, res) {
     }
 
     try {
-        // 2. Call Business Layer (Correct Architecture)
         const album = await business.findAlbumByIdBusiness(albumId)
 
         if (!album) {
             res.status(404).send("Album not found.")
             return
         }
-
-        // 3. Presentation Logic: Determine singular/plural
         const photoCount = album.photos.length
         
         res.render('album-details', { 
             album: album,
             photoCount: photoCount,
-            // Assignment Requirement: must use "photo" if only 1
             photoLabel: photoCount === 1 ? 'photo' : 'photos', 
             layout: undefined
         })
@@ -131,7 +122,6 @@ async function handlePhotoDetailsPage(request, response) {
     }
 
     try {
-        // We use the existing business function
         const photo = await business.findPhotoByIdBusiness(photoId) 
 
         if (!photo) {
@@ -152,57 +142,67 @@ async function handlePhotoDetailsPage(request, response) {
 
 /**
  * Renders the edit-photo template with current photo details and an optional error message.
- * This helper function is used by both GET (initial load) and POST (failure case).
+ * This helper function is used by both the GET route (initial load) and the POST route (failure case).
+ *
+ * @param {Object} res - The Express response object used to render the page.
+ * @param {number} photoId - The ID of the photo being edited.
+ * @param {string|null} errorMessage - The error message to display on the form, or null if none.
+ * @returns {Promise<void>} Renders the 'edit-photo' view or sends a 404/500 response.
  */
-async function renderEditPhotoPage(response, photoId, errorMessage) {
+async function renderEditPhotoPage(res, photoId, errorMessage) {
     try {
         const photo = await business.findPhotoByIdBusiness(photoId) 
 
         if (!photo) {
-            response.status(404).send("Photo not found.")
+            res.status(404).send("Photo not found.")
             return
         }
 
-        response.render('edit-photo', { 
+        res.render('edit-photo', { 
             photo: photo,
             errorMessage: errorMessage,
             layout: undefined
         })
     } catch (error) {
-        // Handle database or business logic errors
-        response.status(500).send("A server error occurred.")
+        res.status(500).send("A server error occurred.")
     }
 }
 
 /**
  * Handles the GET request for the Edit Photo form.
+ * It retrieves the photo's details and renders the form with pre-filled fields.
+ *
+ * @param {Object} req - The Express request object, containing the photo ID in query parameters (pid).
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} Renders the 'edit-photo' view or sends a 404 response.
  */
-async function handleEditPhotoGet(request, response) {
-    const photoId = parseInt(request.query.pid)
+async function handleEditPhotoGet(req, res) {
+    const photoId = parseInt(req.query.pid)
     
     if (isNaN(photoId)) {
-        response.status(404).send("Error: Invalid Photo ID.")
+        res.status(404).send("Error: Invalid Photo ID.")
         return
     }
-
-    // Displays the initial form (no error message)
-    await renderEditPhotoPage(response, photoId, null)
+    await renderEditPhotoPage(res, photoId, null)
 }
 
 /**
  * Handles the POST request to update photo details.
- * Success uses PRG (Redirect). Failure uses Direct Render (No Redirect).
+ * Implements the PRG pattern on success (Redirect).
+ * Implements direct render on failure (No automatic redirection, per assignment rules).
+ *
+ * @param {Object} req - The Express request object, containing form data in the body.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} Redirects on success, or renders the form with an error on failure.
  */
-async function handleEditPhotoPost(request, response) {
-    const photoId = parseInt(request.body.photoId)
-    const newTitle = request.body.title
-    const newDescription = request.body.description
+async function handleEditPhotoPost(req, res) {
+    const photoId = parseInt(req.body.photoId)
+    const newTitle = req.body.title
+    const newDescription = req.body.description
     
-    // 1. Validation Check (FAILURE)
     if (!newTitle || !newDescription) {
         const errorMessage = 'Update failed: Title and Description are required.'
-        // ASSIGNMENT RULE: Direct render to show error (NO REDIRECT)
-        await renderEditPhotoPage(response, photoId, errorMessage) 
+        await renderEditPhotoPage(res, photoId, errorMessage) 
         return
     }
 
@@ -213,20 +213,15 @@ async function handleEditPhotoPost(request, response) {
         })
         
         if (updatedPhoto) {
-            // SUCCESS CASE: Redirect to Photo Details Page (PRG)
-            response.redirect(`/photo-details/${photoId}`) 
+            res.redirect(`/photo-details/${photoId}`) 
         } else {
-            // DB Update Failed (FAILURE)
             const errorMessage = 'Update failed. The photo ID could not be found or updated.'
-            // ASSIGNMENT RULE: Direct render (NO REDIRECT)
-            await renderEditPhotoPage(response, photoId, errorMessage)
+            await renderEditPhotoPage(res, photoId, errorMessage)
         }
 
     } catch (error) {
-        // System Error (FAILURE)
         const errorMessage = 'A system error occurred during the update.'
-        // ASSIGNMENT RULE: Direct render (NO REDIRECT)
-        await renderEditPhotoPage(response, photoId, errorMessage)
+        await renderEditPhotoPage(res, photoId, errorMessage)
     }
 }
 

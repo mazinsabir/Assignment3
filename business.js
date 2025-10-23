@@ -60,7 +60,6 @@ async function findAlbumsBusiness() {
  * @returns {Promise<Object|null>} The album object including its photos, otherwise null
  */
 async function findAlbumByIdBusiness(id) {
-    // Passes the request to the Persistence Layer (correct architecture)
     return await persistence.findAlbumById(id) 
 }
 

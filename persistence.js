@@ -1,4 +1,5 @@
 const { MongoClient } = require('mongodb')
+require('dotenv').config()
 
 let client = undefined
 let db = undefined
@@ -16,7 +17,7 @@ async function connectDatabase() {
     }
 
     try {
-        const uri = 'mongodb+srv://60305598_db_user:Benz745@cluster0.uq9v0vd.mongodb.net/' 
+        const uri = process.env.MONGO_URI
         
         if (!client) {
             client = new MongoClient(uri)
@@ -24,6 +25,7 @@ async function connectDatabase() {
         
         await client.connect() 
         db = client.db(databaseName) 
+        console.log("Connected successfully to database: " + databaseName)
 
     } catch (error) {
         console.error("Could not connect to MongoDB:", error)
@@ -101,22 +103,27 @@ async function findAllAlbums() {
     return allAlbums
 }
 
+/**
+ * Finds an album by its ID in the MongoDB 'albums' collection.
+ * It also finds and attaches all related photos from the 'photos' collection
+ * where the photo's 'albums' array contains the target album's ID.
+ *
+ * @param {number} id - The ID of the album to search for.
+ * @returns {Promise<Object|null>} The album object including a 'photos' array if found, otherwise null.
+ */
 async function findAlbumById(id) {
     await connectDatabase()
-    const albumsCollection = db.collection('albums') // Required collection name: albums
-    const photosCollection = db.collection('photos') // Required collection name: photos
+    const albumsCollection = db.collection('albums') 
+    const photosCollection = db.collection('photos') 
 
-    // 1. Find the album by ID
     const album = await albumsCollection.findOne({ id: id })
 
     if (!album) {
         return null
     }
 
-    // 2. Find all photos that belong to this album's ID
     const albumPhotos = await photosCollection.find({ albums: album.id }).toArray()
 
-    // 3. Attach photos to the album object
     album.photos = albumPhotos
     return album
 }

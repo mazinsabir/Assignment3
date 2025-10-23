@@ -1,10 +1,8 @@
-{{! views/photo-details.handlebars }}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Photo: {{photo.title}}</title>
     <style>
-        /* Simple styling to enforce max width requirement */
         .photo {
             max-width: 300px; 
             height: auto;
@@ -21,8 +19,6 @@
     <p>Description: {{photo.description}}</p>
     
     <img class="photo" src="/photos/{{photo.filename}}" alt="{{photo.title}}">
-
-    <p><a href="javascript:history.back()">Back to Photos</a></p>
 
 </body>
 </html>
