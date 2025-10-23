@@ -1,0 +1,36 @@
+{{! views/edit-photo.handlebars }}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit: {{photo.title}}</title>
+</head>
+<body>
+    <h1>Editing Photo</h1>
+
+    {{#if errorMessage}}
+    <p style="color: red; font-weight: bold;">Error: {{errorMessage}}</p>
+    {{/if}}
+
+    <form action="/edit-photo" method="POST">
+        <input type="hidden" name="photoId" value="{{photo.id}}">
+
+        <div>
+            <label for="title">Title: </label>
+            <input type="text" id="title" name="title" value="{{photo.title}}" required>
+        
+        
+        <br>
+        
+        
+            <label for="description">Description:</label>
+            <input type="text" id="title" name="description" value="{{photo.description}}" required>
+        </div>
+        
+        <br>
+
+        <button type="submit">Submit</button><br>
+        <p><a style="font-size: 12px;" href="/photo-details/{{photo.id}}">Back to Photo Details</a></p>
+    </form>
+
+</body>
+</html>

@@ -29,6 +29,8 @@ function configureServer() {
 
     app.use('/photos', express.static('photos'))
 
+    app.use(express.urlencoded({ extended: true }))
+
     // --- LANDING PAGE: 127.0.0.1:8000 ---
     // Lists all albums as bullet points and links.
     app.get('/', handleLandingPage)
@@ -38,6 +40,9 @@ function configureServer() {
 
     // --- PHOTO DETAILS PAGE ---
     app.get('/photo-details/:photoId', handlePhotoDetailsPage)
+
+    app.get('/edit-photo', handleEditPhotoGet)      // Handles form display
+    app.post('/edit-photo', handleEditPhotoPost)   // Handles form submission
 
     // Start listening on the required port
     app.listen(8000, () => {
@@ -142,6 +147,86 @@ async function handlePhotoDetailsPage(request, response) {
     } catch (error) {
         console.error("Error retrieving photo details:", error)
         response.status(500).send("An error occurred while loading the photo details.")
+    }
+}
+
+/**
+ * Renders the edit-photo template with current photo details and an optional error message.
+ * This helper function is used by both GET (initial load) and POST (failure case).
+ */
+async function renderEditPhotoPage(response, photoId, errorMessage) {
+    try {
+        const photo = await business.findPhotoByIdBusiness(photoId) 
+
+        if (!photo) {
+            response.status(404).send("Photo not found.")
+            return
+        }
+
+        response.render('edit-photo', { 
+            photo: photo,
+            errorMessage: errorMessage,
+            layout: undefined
+        })
+    } catch (error) {
+        // Handle database or business logic errors
+        response.status(500).send("A server error occurred.")
+    }
+}
+
+/**
+ * Handles the GET request for the Edit Photo form.
+ */
+async function handleEditPhotoGet(request, response) {
+    const photoId = parseInt(request.query.pid)
+    
+    if (isNaN(photoId)) {
+        response.status(404).send("Error: Invalid Photo ID.")
+        return
+    }
+
+    // Displays the initial form (no error message)
+    await renderEditPhotoPage(response, photoId, null)
+}
+
+/**
+ * Handles the POST request to update photo details.
+ * Success uses PRG (Redirect). Failure uses Direct Render (No Redirect).
+ */
+async function handleEditPhotoPost(request, response) {
+    const photoId = parseInt(request.body.photoId)
+    const newTitle = request.body.title
+    const newDescription = request.body.description
+    
+    // 1. Validation Check (FAILURE)
+    if (!newTitle || !newDescription) {
+        const errorMessage = 'Update failed: Title and Description are required.'
+        // ASSIGNMENT RULE: Direct render to show error (NO REDIRECT)
+        await renderEditPhotoPage(response, photoId, errorMessage) 
+        return
+    }
+
+    try {
+        const updatedPhoto = await business.updatePhotoDetailsBusiness(photoId, { 
+            title: newTitle, 
+            description: newDescription 
+        })
+        
+        if (updatedPhoto) {
+            // SUCCESS CASE: Redirect to Photo Details Page (PRG)
+            response.redirect(`/photo-details/${photoId}`) 
+        } else {
+            // DB Update Failed (FAILURE)
+            const errorMessage = 'Update failed. The photo ID could not be found or updated.'
+            // ASSIGNMENT RULE: Direct render (NO REDIRECT)
+            await renderEditPhotoPage(response, photoId, errorMessage)
+        }
+
+    } catch (error) {
+        // System Error (FAILURE)
+        const errorMessage = 'A system error occurred during the update.'
+        // ASSIGNMENT RULE: Direct render (NO REDIRECT)
+        await renderEditPhotoPage(response, photoId, errorMessage)
     }
 }
 
