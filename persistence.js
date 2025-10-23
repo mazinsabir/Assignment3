@@ -92,7 +92,6 @@ async function findAlbumByName(name) {
 
 /**
  * Find all albums in the 'albums' collection.
- * This function is necessary for the upcoming Landing Page.
  * @returns {Promise<Array>} Array of all album objects
  */
 async function findAllAlbums() {

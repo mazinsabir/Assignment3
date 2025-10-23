@@ -1,0 +1,19 @@
+{{! views/index.handlebars }}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{title}}</title>
+</head>
+<body>
+    <h1>Photo Album</h1>
+    
+    <ul>
+        {{#each albums}}
+        <li>
+            <a href="/album/{{this.id}}">{{this.name}}</a> 
+        </li>
+        {{/each}}
+    </ul>
+
+</body>
+</html>

@@ -46,9 +46,18 @@ async function closeApplication() {
     await persistence.closeDatabase()
 }
 
+/**
+ * Retrieves all albums from the persistence layer.
+ * @returns {Promise<Array>} Array of all album objects
+ */
+async function findAlbumsBusiness() {
+    return await persistence.findAllAlbums()
+}
+
 module.exports = {
     findPhotoByIdBusiness,
     updatePhotoDetailsBusiness,
     findAlbumByNameBusiness,
-    closeApplication
+    closeApplication,
+    findAlbumsBusiness
 }
