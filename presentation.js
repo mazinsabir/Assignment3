@@ -120,6 +120,7 @@ async function mainMenu() {
         } else if (choice === "4") {
             console.log("Goodbye!")
             running = false
+            await business.closeApplication()
         } else {
             console.log("Invalid choice, please try again.")
         }

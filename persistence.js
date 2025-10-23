@@ -1,65 +1,70 @@
-const fs = require('fs').promises
+const { MongoClient } = require('mongodb')
+
+let client = undefined
+let db = undefined
+
+const databaseName = 'infs3201_fall2025'
 
 /**
- * Load all photos from the JSON file.
- * @returns {Promise<Array>} Array of photo objects
- */
-async function loadPhotosFromJson() {
-    let raw = await fs.readFile('photos.json', 'utf8')
-    return JSON.parse(raw)
-}
-
-/**
- * Save the given list of photos back into the JSON file.
- * @param {Array} photos - Array of photo objects
+ * Connects to the MongoDB database client.
+ * NOTE: You MUST replace the URI with your actual connection string.
  * @returns {Promise<void>}
  */
-async function savePhotosToJson(photos) {
-    let json = JSON.stringify(photos, null, 4)
-    await fs.writeFile('photos.json', json, 'utf8')
+async function connectDatabase() {
+    if (db) {
+        return
+    }
+
+    try {
+        const uri = 'mongodb+srv://60305598_db_user:Benz745@cluster0.uq9v0vd.mongodb.net/' 
+        
+        if (!client) {
+            client = new MongoClient(uri)
+        }
+        
+        await client.connect() 
+        db = client.db(databaseName) 
+
+    } catch (error) {
+        console.error("Could not connect to MongoDB:", error)
+        client = undefined
+        db = undefined
+        throw error
+    }
 }
 
 /**
- * Load all albums from the JSON file.
- * @returns {Promise<Array>} Array of album objects
- */
-async function loadAlbumsFromJson() {
-    let raw = await fs.readFile('albums.json', 'utf8')
-    return JSON.parse(raw)
-}
-
-/**
- * Find a photo by its ID.
+ * Find a photo by its ID from the 'photos' collection.
  * @param {number} id - The ID of the photo
  * @returns {Promise<Object|null>} The photo object if found, otherwise null
  */
 async function findPhotoById(id) {
-    let photos = await loadPhotosFromJson()
-    for (let i = 0; i < photos.length; i++) {
-        if (photos[i].id === id) {
-            return photos[i]
-        }
-    }
-    return null
+    await connectDatabase()
+    const photosCollection = db.collection('photos') 
+    const photo = await photosCollection.findOne({ id: id })
+    return photo
 }
 
 /**
- * Update details of a photo by ID.
+ * Update details of a photo by ID in the 'photos' collection.
  * @param {number} id - The ID of the photo
- * @param {Object} newDetails - The new details to update
+ * @param {Object} newDetails - The new details to update (e.g., { title: "New Title" })
  * @returns {Promise<Object|null>} The updated photo object if found, otherwise null
  */
 async function updatePhotoDetails(id, newDetails) {
-    let photos = await loadPhotosFromJson()
-    for (let i = 0; i < photos.length; i++) {
-        if (photos[i].id === id) {
-            for (let key in newDetails) {
-                photos[i][key] = newDetails[key]
-            }
-            await savePhotosToJson(photos)
-            return photos[i]
-        }
+    await connectDatabase()
+    const photosCollection = db.collection('photos') 
+    
+    const result = await photosCollection.updateOne(
+        { id: id },
+        { $set: newDetails }
+    )
+
+    if (result.matchedCount > 0) {
+        const updatedPhoto = await photosCollection.findOne({ id: id })
+        return updatedPhoto
     }
+
     return null
 }
 
@@ -69,42 +74,54 @@ async function updatePhotoDetails(id, newDetails) {
  * @returns {Promise<Object|null>} Album object with a `photos` array if found, otherwise null
  */
 async function findAlbumByName(name) {
-    let albums = await loadAlbumsFromJson()
-    let photos = await loadPhotosFromJson()
+    await connectDatabase()
+    const albumsCollection = db.collection('albums') 
+    const photosCollection = db.collection('photos') 
 
-    let album = null
-    for (let i = 0; i < albums.length; i++) {
-        if (albums[i].name.toLowerCase() === name.toLowerCase()) {
-            album = albums[i]
-            break
-        }
-    }
+    const album = await albumsCollection.findOne({ name: { $regex: new RegExp('^' + name + '$', 'i') } }) 
 
     if (!album) {
         return null
     }
 
-    let albumPhotos = []
-    for (let i = 0; i < photos.length; i++) {
-        let photoAlbums = photos[i].albums
-        for (let j = 0; j < photoAlbums.length; j++) {
-            if (photoAlbums[j] === album.id) {
-                albumPhotos.push(photos[i])
-                break
-            }
-        }
-    }
+    const albumPhotos = await photosCollection.find({ albums: album.id }).toArray()
 
     album.photos = albumPhotos
     return album
 }
 
+/**
+ * Find all albums in the 'albums' collection.
+ * This function is necessary for the upcoming Landing Page.
+ * @returns {Promise<Array>} Array of all album objects
+ */
+async function findAllAlbums() {
+    await connectDatabase()
+    const albumsCollection = db.collection('albums')
+    const allAlbums = await albumsCollection.find({}).toArray()
+    return allAlbums
+}
+
+/**
+ * Closes the MongoDB client connection.
+ * This is necessary to allow the Node.js process to exit gracefully.
+ * @returns {Promise<void>}
+ */
+async function closeDatabase() {
+    if (client) {
+        console.log("Closing MongoDB connection...")
+        await client.close()
+        client = undefined
+        db = undefined
+        console.log("Connection closed.")
+    }
+}
 
 module.exports = {
-    loadPhotosFromJson,
-    savePhotosToJson,
-    loadAlbumsFromJson,
+    connectDatabase,
     findPhotoById,
     updatePhotoDetails,
-    findAlbumByName
+    findAlbumByName,
+    findAllAlbums,
+    closeDatabase
 }

@@ -37,8 +37,18 @@ async function findAlbumByNameBusiness(name) {
     return await persistence.findAlbumByName(name)
 }
 
+/**
+ * Initiates the closure of the database connection 
+ * to allow the application process to exit gracefully.
+ * @returns {Promise<void>}
+ */
+async function closeApplication() {
+    await persistence.closeDatabase()
+}
+
 module.exports = {
     findPhotoByIdBusiness,
     updatePhotoDetailsBusiness,
-    findAlbumByNameBusiness
+    findAlbumByNameBusiness,
+    closeApplication
 }
