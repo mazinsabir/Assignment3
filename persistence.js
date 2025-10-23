@@ -29,15 +29,6 @@ async function loadAlbumsFromJson() {
 }
 
 /**
- * Load all users from the JSON file.
- * @returns {Promise<Array>} Array of user objects
- */
-async function loadUsersFromJson() {
-    let raw = await fs.readFile('users.json', 'utf8')
-    return JSON.parse(raw)
-}
-
-/**
  * Find a photo by its ID.
  * @param {number} id - The ID of the photo
  * @returns {Promise<Object|null>} The photo object if found, otherwise null
@@ -108,29 +99,12 @@ async function findAlbumByName(name) {
     return album
 }
 
-/**
- * Find a user by username and password.
- * @param {string} username - The username
- * @param {string} password - The password
- * @returns {Promise<Object|null>} The user object if credentials match, otherwise null
- */
-async function findUser(username, password) {
-    let users = await loadUsersFromJson()
-    for (let i = 0; i < users.length; i++) {
-        if (users[i].username === username && users[i].password === password) {
-            return users[i]
-        }
-    }
-    return null
-}
 
 module.exports = {
     loadPhotosFromJson,
     savePhotosToJson,
     loadAlbumsFromJson,
-    loadUsersFromJson,
     findPhotoById,
     updatePhotoDetails,
-    findAlbumByName,
-    findUser
+    findAlbumByName
 }

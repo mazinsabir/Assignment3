@@ -1,39 +1,28 @@
 const persistence = require('./persistence')
 
 /**
- * Authenticate a user by username and password.
- * @param {string} username - The username of the user
- * @param {string} password - The password of the user
- * @returns {Promise<Object|null>} The user object if login succeeds, otherwise null
- */
-async function login(username, password) {
-    return await persistence.findUser(username, password)
-}
-
-/**
  * Find a photo by ID if the logged-in user is the owner.
  * @param {number} id - The ID of the photo
- * @param {Object} user - The currently logged-in user
  * @returns {Promise<Object|null>} The photo object if access is allowed, otherwise null
  */
-async function findPhotoByIdBusiness(id, user) {
+async function findPhotoByIdBusiness(id) {
     let photo = await persistence.findPhotoById(id)
-    if (photo && photo.owner && photo.owner === user.id) {
+    if (photo) {
         return photo
     }
     return null
 }
 
 /**
- * Update details of a photo if the logged-in user is the owner.
+ * Update details of a photo.
+ * In Assignment 3, this function is simplified to bypass user-ownership checks.
  * @param {number} id - The ID of the photo
  * @param {Object} newDetails - The new details to update
- * @param {Object} user - The currently logged-in user
- * @returns {Promise<Object|null>} The updated photo object if access is allowed, otherwise null
+ * @returns {Promise<Object|null>} The updated photo object if found, otherwise null
  */
-async function updatePhotoDetailsBusiness(id, newDetails, user) {
+async function updatePhotoDetailsBusiness(id, newDetails) {
     let photo = await persistence.findPhotoById(id)
-    if (photo && photo.owner && photo.owner === user.id) {
+    if (photo) {
         return await persistence.updatePhotoDetails(id, newDetails)
     }
     return null
@@ -49,7 +38,6 @@ async function findAlbumByNameBusiness(name) {
 }
 
 module.exports = {
-    login,
     findPhotoByIdBusiness,
     updatePhotoDetailsBusiness,
     findAlbumByNameBusiness
