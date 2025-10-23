@@ -101,6 +101,26 @@ async function findAllAlbums() {
     return allAlbums
 }
 
+async function findAlbumById(id) {
+    await connectDatabase()
+    const albumsCollection = db.collection('albums') // Required collection name: albums
+    const photosCollection = db.collection('photos') // Required collection name: photos
+
+    // 1. Find the album by ID
+    const album = await albumsCollection.findOne({ id: id })
+
+    if (!album) {
+        return null
+    }
+
+    // 2. Find all photos that belong to this album's ID
+    const albumPhotos = await photosCollection.find({ albums: album.id }).toArray()
+
+    // 3. Attach photos to the album object
+    album.photos = albumPhotos
+    return album
+}
+
 /**
  * Closes the MongoDB client connection.
  * This is necessary to allow the Node.js process to exit gracefully.
@@ -122,5 +142,6 @@ module.exports = {
     updatePhotoDetails,
     findAlbumByName,
     findAllAlbums,
+    findAlbumById,
     closeDatabase
 }

@@ -54,10 +54,21 @@ async function findAlbumsBusiness() {
     return await persistence.findAllAlbums()
 }
 
+/**
+ * Finds an album by its ID and includes all associated photos.
+ * @param {number} id - The ID of the album
+ * @returns {Promise<Object|null>} The album object including its photos, otherwise null
+ */
+async function findAlbumByIdBusiness(id) {
+    // Passes the request to the Persistence Layer (correct architecture)
+    return await persistence.findAlbumById(id) 
+}
+
 module.exports = {
     findPhotoByIdBusiness,
     updatePhotoDetailsBusiness,
     findAlbumByNameBusiness,
     closeApplication,
-    findAlbumsBusiness
+    findAlbumsBusiness,
+    findAlbumByIdBusiness
 }

@@ -1,0 +1,23 @@
+{{! views/album-details.handlebars }}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{album.name}}</title>
+</head>
+<body>
+    
+
+    <h1>Photos in {{album.name}} ({{photoCount}} {{photoLabel}})</h1>
+    
+    <ul>
+        {{#each album.photos}}
+        <li>
+            <a href="/photo-details/{{this.id}}">{{this.title}}</a> 
+        </li>
+        {{/each}}
+    </ul>
+
+    <p><a href="/">Back to Albums</a></p>
+
+</body>
+</html>
